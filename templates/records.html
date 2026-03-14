@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patient Records | VH-AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2 sidebar shadow">
+                <div class="text-center mb-5">
+                    <h4 class="fw-bold text-white mb-0">ValueHealth <span class="text-primary">AI</span></h4>
+                </div>
+                <nav class="nav flex-column mt-4 flex-grow-1">
+                    <a class="nav-link" href="/">🏠 Home Dashboard</a>
+                    <a class="nav-link" href="/analysis">🔍 New Analysis</a>
+                    <a class="nav-link active" href="/records">📋 Patient History</a>
+                </nav>
+                
+                <div class="mt-auto border-top pt-3">
+                    <a class="nav-link text-danger" href="/logout">🚪 Sign Out</a>
+                </div>
+            </div>
+
+            <div class="col-md-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold text-dark">Patient Clinical History</h3>
+                    <div class="text-end">
+                        <span class="text-muted small">Total Records: <span class="fw-bold text-primary">{{ records|length }}</span></span>
+                    </div>
+                </div>
+
+                <div class="card p-3 mb-4 shadow-sm">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">🔍</span>
+                        <input type="text" id="searchInput" class="form-control search-box border-start-0" 
+                               placeholder="Search patient by name..." onkeyup="filterRecords()">
+                    </div>
+                </div>
+
+                <div class="card shadow-sm overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="recordsTable">
+                            <thead class="table-light">
+                                <tr class="text-uppercase small fw-bold text-muted">
+                                    <th>Patient Name</th>
+                                    <th>Date & Time</th>
+                                    <th>Glucose</th>
+                                    <th>Risk Score</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in records %}
+                                <tr class="{{ 'urgent-row' if r.status=='URGENT' else 'stable-row' }}">
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ r.name }}</div>
+                                        <div class="text-muted extra-small" style="font-size: 0.75rem;">Age: {{ r.age }} | {{ r.gender }}</div>
+                                    </td>
+                                    <td class="text-muted small">{{ r.timestamp }}</td>
+                                    <td><span class="fw-bold">{{ r.glucose }}</span> mg/dL</td>
+                                    <td>
+                                        {% set safe_score = r.get('risk_score') | default(0) | int %}
+                                        <div class="progress" style="height: 8px; width: 100px; background-color: #e9ecef;">
+                                            <div class="progress-bar bg-{{ 'danger' if safe_score > 50 else 'success' }} dynamic-bar" role="progressbar"
+                                                data-width="{{ safe_score }}">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">{{ safe_score }}%</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill bg-{{ 'danger' if r.status=='URGENT' else 'success' }} px-3 py-2 shadow-sm">
+                                            {{ r.status }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <form action="/download_report" method="POST" style="display:inline;">
+                                            <input type="hidden" name="name" value="{{ r.name }}">
+                                            <input type="hidden" name="age" value="{{ r.age }}">
+                                            <input type="hidden" name="gender" value="{{ r.gender }}">
+                                            <input type="hidden" name="status" value="{{ r.status }}">
+                                            <input type="hidden" name="risk_score" value="{{ safe_score }}">
+                                            {% for rec in r.recommendations %}
+                                            <input type="hidden" name="recs" value="{{ rec }}">
+                                            {% endfor %}
+                                            <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+                                                📄 Report
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Page load aana udanē width-ah set panna
+        window.onload = function() {
+            document.querySelectorAll('.dynamic-bar').forEach(function(bar) {
+                let width = bar.getAttribute('data-width');
+                bar.style.width = width + '%';
+            });
+        };
+
+        // Live search logic
+        function filterRecords() {
+            let input = document.getElementById('searchInput');
+            let filter = input.value.toLowerCase();
+            let table = document.getElementById('recordsTable');
+            let tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                let nameCell = tr[i].getElementsByTagName('td')[0];
+                if (nameCell) {
+                    let txtValue = nameCell.textContent || nameCell.innerText;
+                    tr[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
