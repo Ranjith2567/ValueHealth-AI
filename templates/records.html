@@ -3,156 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>Patient Records | VH-AI</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
-        body { background: #f4f7fa; }
-
-        /* Sidebar Responsive Logic */
-        @media (max-width: 768px) {
-            .sidebar {
-                min-height: auto !important;
-                position: relative !important;
-                padding: 15px !important;
-            }
-            .sidebar nav {
-                flex-direction: row !important;
-                justify-content: space-around;
-            }
-            .sidebar .nav-link {
-                font-size: 0.8rem;
-                margin-bottom: 0 !important;
-                padding: 10px;
-            }
-            .sidebar .text-center.mb-5 { margin-bottom: 15px !important; }
+        /* Table Specific Modern Overrides */
+        .table { border-collapse: separate; border-spacing: 0 12px; }
+        .table tbody tr { 
+            background: white; 
+            border-radius: 15px; 
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
-
-        /* Search Box Mobile Fix */
-        .search-container {
-            border-radius: 12px;
+        .table tbody tr:hover { 
+            transform: scale(1.005); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
-
-        /* Table Responsiveness */
-        .table-responsive {
-            border-radius: 12px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* Table width check to prevent squashing */
-        #recordsTable {
-            min-width: 850px; 
-        }
-
-        .progress {
-            border-radius: 10px;
-            background-color: #e9ecef;
-        }
-
-        .extra-small { font-size: 0.75rem; }
+        .table td { border: none; padding: 20px 15px !important; }
+        .table td:first-child { border-top-left-radius: 15px; border-bottom-left-radius: 15px; }
+        .table td:last-child { border-top-right-radius: 15px; border-bottom-right-radius: 15px; }
         
-        .card { border: none; border-radius: 15px; }
+        .search-container { border-radius: 20px; border: none; }
+        .progress { border-radius: 20px; background-color: #f1f5f9; }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <div class="col-12 col-md-2 sidebar shadow">
-                <div class="text-center mb-5">
+            <div class="col-12 col-md-2 sidebar shadow-lg">
+                <div class="text-center mb-md-5">
                     <h4 class="fw-bold text-white mb-0">ValueHealth <span class="text-primary">AI</span></h4>
                 </div>
-                <nav class="nav flex-column mt-4 flex-grow-1">
-                    <a class="nav-link" href="/">🏠 Home Dashboard</a>
-                    <a class="nav-link" href="/analysis">🔍 New Analysis</a>
-                    <a class="nav-link active" href="/records">📋 Patient History</a>
+                <nav class="nav flex-column flex-grow-1 mt-4">
+                    <a class="nav-link" href="/"><i class="bi bi-grid-fill"></i> Home Dashboard</a>
+                    <a class="nav-link" href="/analysis"><i class="bi bi-activity"></i> Risk Analysis</a>
+                    <a class="nav-link active" href="/records"><i class="bi bi-clipboard2-pulse"></i> Patient History</a>
                 </nav>
-                
-                <div class="mt-auto border-top pt-3 d-none d-md-block">
-                    <a class="nav-link text-danger" href="/logout">🚪 Sign Out</a>
+                <div class="mt-auto border-top border-secondary pt-3 d-none d-md-block">
+                    <a class="nav-link text-danger" href="/logout"><i class="bi bi-box-arrow-left"></i> Sign Out</a>
                 </div>
             </div>
 
-            <div class="col-12 col-md-10 p-3 p-md-4">
+            <div class="col-12 col-md-10 p-3 p-md-5">
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4">
-                    <h3 class="fw-bold text-dark mb-2 mb-sm-0">Patient Clinical History</h3>
-                    <div class="text-sm-end">
-                        <span class="badge bg-white text-primary border border-primary px-3 py-2">
-                            Total Records: <strong>{{ records|length }}</strong>
+                    <div>
+                        <h3 class="fw-bold text-dark mb-1">Patient Clinical History</h3>
+                        <p class="text-muted small mb-0">Manage and review all AI-evaluated records</p>
+                    </div>
+                    <div class="mt-3 mt-sm-0">
+                        <span class="badge bg-white text-primary border border-primary px-4 py-3 rounded-4 shadow-sm">
+                            Total Records: <strong class="fs-5 ms-1">{{ records|length }}</strong>
                         </span>
                     </div>
                 </div>
 
-                <div class="card p-2 p-md-3 mb-4 shadow-sm search-container">
+                <div class="card p-3 mb-5 search-container shadow-sm">
                     <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0">🔍</span>
-                        <input type="text" id="searchInput" class="form-control border-start-0 py-2" 
+                        <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="searchInput" class="form-control border-0 fs-6" 
                                placeholder="Search patient by name..." onkeyup="filterRecords()">
                     </div>
                 </div>
 
-                <div class="card shadow-sm overflow-hidden">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" id="recordsTable">
-                            <thead class="table-light">
-                                <tr class="text-uppercase small fw-bold text-muted">
-                                    <th>Patient Name</th>
-                                    <th>Date & Time</th>
-                                    <th>Glucose</th>
-                                    <th>Risk Score</th>
-                                    <th>Status</th>
-                                    <th class="text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for r in records %}
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-dark">{{ r.name }}</div>
-                                        <div class="text-muted extra-small">Age: {{ r.age }} | {{ r.gender }}</div>
-                                    </td>
-                                    <td class="text-muted small">{{ r.timestamp }}</td>
-                                    <td><span class="fw-bold">{{ r.glucose }}</span> <small>mg/dL</small></td>
-                                    <td>
-                                        {% set safe_score = r.get('risk_score') | default(0) | int %}
-                                        <div class="d-flex align-items-center">
-                                            <div class="progress me-2" style="height: 8px; width: 80px;">
-                                                <div class="progress-bar bg-{{ 'danger' if safe_score > 50 else 'success' }} dynamic-bar" 
-                                                     role="progressbar" data-width="{{ safe_score }}">
-                                                </div>
-                                            </div>
-                                            <small class="text-muted">{{ safe_score }}%</small>
+                <div class="table-responsive">
+                    <table class="table align-middle" id="recordsTable">
+                        <thead>
+                            <tr class="text-uppercase small fw-bold text-muted">
+                                <th class="ps-4">Patient Profile</th>
+                                <th>Timestamp</th>
+                                <th>Glucose</th>
+                                <th>AI Risk Score</th>
+                                <th>Final Status</th>
+                                <th class="text-center">Report</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in records %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
+                                            <i class="bi bi-person text-primary fs-5"></i>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge rounded-pill bg-{{ 'danger' if r.status=='URGENT' else 'success' }} px-3 py-2 shadow-sm">
-                                            {{ r.status }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <form action="/download_report" method="POST" style="display:inline;">
-                                            <input type="hidden" name="name" value="{{ r.name }}">
-                                            <input type="hidden" name="age" value="{{ r.age }}">
-                                            <input type="hidden" name="gender" value="{{ r.gender }}">
-                                            <input type="hidden" name="status" value="{{ r.status }}">
-                                            <input type="hidden" name="risk_score" value="{{ safe_score }}">
-                                            {% if r.recommendations %}
-                                                {% for rec in r.recommendations %}
-                                                <input type="hidden" name="recs" value="{{ rec }}">
-                                                {% endfor %}
-                                            {% endif %}
-                                            <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
-                                                📄 Report
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">{{ r.name }}</div>
+                                            <div class="text-muted extra-small">Age: {{ r.age }} | {{ r.gender }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-muted small">{{ r.timestamp }}</td>
+                                <td><span class="fw-bold text-dark">{{ r.glucose }}</span> <small class="text-muted">mg/dL</small></td>
+                                <td>
+                                    {% set safe_score = r.get('risk_score') | default(0) | int %}
+                                    <div class="d-flex align-items-center" style="max-width: 150px;">
+                                        <div class="progress flex-grow-1 me-2" style="height: 10px;">
+                                            <div class="progress-bar bg-{{ 'danger' if safe_score > 50 else 'success' }} dynamic-bar" 
+                                                 role="progressbar" data-width="{{ safe_score }}">
+                                            </div>
+                                        </div>
+                                        <small class="fw-bold text-{{ 'danger' if safe_score > 50 else 'success' }}">{{ safe_score }}%</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill bg-{{ 'danger' if r.status=='URGENT' else 'success' }} px-3 py-2 shadow-sm">
+                                        <i class="bi bi-dot"></i> {{ r.status }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <form action="/download_report" method="POST" style="display:inline;">
+                                        <input type="hidden" name="name" value="{{ r.name }}">
+                                        <input type="hidden" name="age" value="{{ r.age }}">
+                                        <input type="hidden" name="gender" value="{{ r.gender }}">
+                                        <input type="hidden" name="status" value="{{ r.status }}">
+                                        <input type="hidden" name="risk_score" value="{{ safe_score }}">
+                                        {% if r.recommendations %}
+                                            {% for rec in r.recommendations %}
+                                            <input type="hidden" name="recs" value="{{ rec }}">
+                                            {% endfor %}
+                                        {% endif %}
+                                        <button type="submit" class="btn btn-light btn-sm rounded-pill px-3 border shadow-sm">
+                                            <i class="bi bi-file-earmark-pdf text-danger"></i> PDF
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
