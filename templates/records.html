@@ -1,14 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Patient Records | VH-AI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        body { background: #f4f7fa; }
+
+        /* Sidebar Responsive Logic */
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto !important;
+                position: relative !important;
+                padding: 15px !important;
+            }
+            .sidebar nav {
+                flex-direction: row !important;
+                justify-content: space-around;
+            }
+            .sidebar .nav-link {
+                font-size: 0.8rem;
+                margin-bottom: 0 !important;
+                padding: 10px;
+            }
+            .sidebar .text-center.mb-5 { margin-bottom: 15px !important; }
+        }
+
+        /* Search Box Mobile Fix */
+        .search-container {
+            border-radius: 12px;
+        }
+
+        /* Table Responsiveness */
+        .table-responsive {
+            border-radius: 12px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Table width check to prevent squashing */
+        #recordsTable {
+            min-width: 850px; 
+        }
+
+        .progress {
+            border-radius: 10px;
+            background-color: #e9ecef;
+        }
+
+        .extra-small { font-size: 0.75rem; }
+        
+        .card { border: none; border-radius: 15px; }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-2 sidebar shadow">
+            <div class="col-12 col-md-2 sidebar shadow">
                 <div class="text-center mb-5">
                     <h4 class="fw-bold text-white mb-0">ValueHealth <span class="text-primary">AI</span></h4>
                 </div>
@@ -18,23 +70,25 @@
                     <a class="nav-link active" href="/records">📋 Patient History</a>
                 </nav>
                 
-                <div class="mt-auto border-top pt-3">
+                <div class="mt-auto border-top pt-3 d-none d-md-block">
                     <a class="nav-link text-danger" href="/logout">🚪 Sign Out</a>
                 </div>
             </div>
 
-            <div class="col-md-10 p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="fw-bold text-dark">Patient Clinical History</h3>
-                    <div class="text-end">
-                        <span class="text-muted small">Total Records: <span class="fw-bold text-primary">{{ records|length }}</span></span>
+            <div class="col-12 col-md-10 p-3 p-md-4">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4">
+                    <h3 class="fw-bold text-dark mb-2 mb-sm-0">Patient Clinical History</h3>
+                    <div class="text-sm-end">
+                        <span class="badge bg-white text-primary border border-primary px-3 py-2">
+                            Total Records: <strong>{{ records|length }}</strong>
+                        </span>
                     </div>
                 </div>
 
-                <div class="card p-3 mb-4 shadow-sm">
+                <div class="card p-2 p-md-3 mb-4 shadow-sm search-container">
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">🔍</span>
-                        <input type="text" id="searchInput" class="form-control search-box border-start-0" 
+                        <input type="text" id="searchInput" class="form-control border-start-0 py-2" 
                                placeholder="Search patient by name..." onkeyup="filterRecords()">
                     </div>
                 </div>
@@ -54,21 +108,23 @@
                             </thead>
                             <tbody>
                                 {% for r in records %}
-                                <tr class="{{ 'urgent-row' if r.status=='URGENT' else 'stable-row' }}">
+                                <tr>
                                     <td>
                                         <div class="fw-bold text-dark">{{ r.name }}</div>
-                                        <div class="text-muted extra-small" style="font-size: 0.75rem;">Age: {{ r.age }} | {{ r.gender }}</div>
+                                        <div class="text-muted extra-small">Age: {{ r.age }} | {{ r.gender }}</div>
                                     </td>
                                     <td class="text-muted small">{{ r.timestamp }}</td>
-                                    <td><span class="fw-bold">{{ r.glucose }}</span> mg/dL</td>
+                                    <td><span class="fw-bold">{{ r.glucose }}</span> <small>mg/dL</small></td>
                                     <td>
                                         {% set safe_score = r.get('risk_score') | default(0) | int %}
-                                        <div class="progress" style="height: 8px; width: 100px; background-color: #e9ecef;">
-                                            <div class="progress-bar bg-{{ 'danger' if safe_score > 50 else 'success' }} dynamic-bar" role="progressbar"
-                                                data-width="{{ safe_score }}">
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress me-2" style="height: 8px; width: 80px;">
+                                                <div class="progress-bar bg-{{ 'danger' if safe_score > 50 else 'success' }} dynamic-bar" 
+                                                     role="progressbar" data-width="{{ safe_score }}">
+                                                </div>
                                             </div>
+                                            <small class="text-muted">{{ safe_score }}%</small>
                                         </div>
-                                        <small class="text-muted">{{ safe_score }}%</small>
                                     </td>
                                     <td>
                                         <span class="badge rounded-pill bg-{{ 'danger' if r.status=='URGENT' else 'success' }} px-3 py-2 shadow-sm">
@@ -82,9 +138,11 @@
                                             <input type="hidden" name="gender" value="{{ r.gender }}">
                                             <input type="hidden" name="status" value="{{ r.status }}">
                                             <input type="hidden" name="risk_score" value="{{ safe_score }}">
-                                            {% for rec in r.recommendations %}
-                                            <input type="hidden" name="recs" value="{{ rec }}">
-                                            {% endfor %}
+                                            {% if r.recommendations %}
+                                                {% for rec in r.recommendations %}
+                                                <input type="hidden" name="recs" value="{{ rec }}">
+                                                {% endfor %}
+                                            {% endif %}
                                             <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
                                                 📄 Report
                                             </button>
@@ -101,7 +159,7 @@
     </div>
 
     <script>
-        // Page load aana udanē width-ah set panna
+        // Set progress bar widths dynamically
         window.onload = function() {
             document.querySelectorAll('.dynamic-bar').forEach(function(bar) {
                 let width = bar.getAttribute('data-width');
@@ -109,12 +167,11 @@
             });
         };
 
-        // Live search logic
+        // Live search filter
         function filterRecords() {
             let input = document.getElementById('searchInput');
             let filter = input.value.toLowerCase();
-            let table = document.getElementById('recordsTable');
-            let tr = table.getElementsByTagName('tr');
+            let tr = document.getElementById('recordsTable').getElementsByTagName('tr');
 
             for (let i = 1; i < tr.length; i++) {
                 let nameCell = tr[i].getElementsByTagName('td')[0];
