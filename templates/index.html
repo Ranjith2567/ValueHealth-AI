@@ -23,8 +23,8 @@
                     <h4 class="fw-bold text-white mb-0">ValueHealth <span class="text-primary">AI</span></h4>
                 </div>
                 <nav class="nav flex-column flex-grow-1 mt-4">
-                    <a class="nav-link" href="/"><i class="bi bi-grid-fill"></i> Home Dashboard</a>
-                    <a class="nav-link active" href="/analysis"><i class="bi bi-activity"></i> Risk Analysis</a>
+                    <a class="nav-link" href="/"><i class="bi bi-grid-fill"></i> Dashboard</a>
+                    <a class="nav-link active" href="/analysis"><i class="bi bi-activity"></i> New Analysis</a>
                     <a class="nav-link" href="/records"><i class="bi bi-clipboard2-pulse"></i> Patient History</a>
                 </nav>
                 <div class="mt-auto border-top border-secondary pt-3 d-none d-md-block">
@@ -36,7 +36,7 @@
                 <div class="row g-4">
                     
                     <div class="col-12 col-lg-4">
-                        <div class="card p-4 h-100">
+                        <div class="card p-4 h-100 shadow-sm border-0">
                             <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">
                                 <i class="bi bi-heart-pulse text-primary me-2"></i>Diagnostic Inputs
                             </h5>
@@ -58,7 +58,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <hr class="my-4 opacity-25">
+                                <hr class="my-4 opacity-10">
                                 <div class="row g-3">
                                     <div class="col-6">
                                         <label class="form-label small fw-bold text-muted text-uppercase">Glucose</label>
@@ -81,7 +81,7 @@
                                     <label class="form-label small fw-bold text-muted text-uppercase">Clinical Observations</label>
                                     <textarea name="notes" class="form-control" rows="2" placeholder="Symptoms, lifestyle notes..." required></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100 mt-4">
+                                <button type="submit" class="btn btn-primary w-100 mt-4 py-3 fw-bold">
                                     GENERATE AI PREDICTION
                                 </button>
                             </form>
@@ -90,25 +90,25 @@
 
                     <div class="col-12 col-lg-8">
                         {% if show_result %}
-                        <div class="card overflow-hidden">
+                        <div class="card overflow-hidden border-0 shadow-sm">
                             <div class="card-header bg-{{color}} text-white p-4 border-0 d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0 fw-bold"><i class="bi bi-person-check me-2"></i>Analysis: {{ patient_name }}</h5>
-                                <span class="badge bg-white text-{{color}} px-3 py-2 rounded-pill fw-bold text-uppercase">{{ status }}</span>
+                                <span class="badge bg-white text-{{color}} px-3 py-2 rounded-pill fw-bold text-uppercase shadow-sm">{{ status }}</span>
                             </div>
-                            <div class="card-body p-4">
+                            <div class="card-body p-4 bg-white">
                                 <div class="row align-items-center mb-4">
-                                    <div class="col-md-6 border-end">
+                                    <div class="col-md-6 border-end text-center text-md-start">
                                         <p class="mb-1 text-muted small text-uppercase fw-bold">Risk Probability</p>
                                         <h1 class="fw-bold text-{{color}} display-3 mb-0">{{ risk_score }}%</h1>
                                     </div>
-                                    <div class="col-md-6 ps-md-4">
+                                    <div class="col-md-6 ps-md-4 text-center text-md-start">
                                         <p class="text-muted small mb-1"><strong>Age:</strong> {{ patient_age }} | <strong>Gender:</strong> {{ patient_gender }}</p>
                                         <div class="mt-3">
                                             <form action="/download_report" method="POST">
                                                 <input type="hidden" name="name" value="{{ patient_name }}">
                                                 <input type="hidden" name="status" value="{{ status }}">
                                                 <input type="hidden" name="risk_score" value="{{ risk_score }}">
-                                                <button type="submit" class="btn btn-outline-{{color}} w-100 fw-bold">
+                                                <button type="submit" class="btn btn-outline-{{color}} w-100 fw-bold py-2">
                                                     <i class="bi bi-file-earmark-pdf"></i> DOWNLOAD PDF REPORT
                                                 </button>
                                             </form>
@@ -122,8 +122,8 @@
                                 </div>
 
                                 <div class="mt-4">
-                                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-shield-check text-success"></i> AI Guidance:</h6>
-                                    <div class="row">
+                                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-shield-check text-success me-2"></i>AI Guidance:</h6>
+                                    <div class="row g-3">
                                         <div class="col-md-7">
                                             <ul class="text-muted small ps-3">
                                                 {% for rec in recommendations %}
@@ -131,13 +131,19 @@
                                                 {% endfor %}
                                             </ul>
                                         </div>
-                                        <div class="col-md-5 bg-light rounded-3 p-3">
+                                        <div class="col-md-5 bg-light rounded-4 p-3 border">
                                             <h6 class="small fw-bold text-primary mb-2">Weekly Plan: {{ diet_type }}</h6>
                                             <div class="table-responsive">
                                                 <table class="table table-sm table-borderless small mb-0">
                                                     <thead><tr class="text-muted"><th>Day</th><th>B</th><th>L</th><th>D</th></tr></thead>
                                                     <tbody>
-                                                        {% for meal in diet_plan[:3] %} <tr><td class="fw-bold">{{ meal.day[:3] }}</td><td>{{ meal.b[:5] }}..</td><td>{{ meal.l[:5] }}..</td><td>{{ meal.d[:5] }}..</td></tr>
+                                                        {% for meal in diet_plan[:3] %}
+                                                        <tr>
+                                                            <td class="fw-bold">{{ meal.day[:3] }}</td>
+                                                            <td class="text-muted">{{ meal.b[:5] }}..</td>
+                                                            <td class="text-muted">{{ meal.l[:5] }}..</td>
+                                                            <td class="text-muted">{{ meal.d[:5] }}..</td>
+                                                        </tr>
                                                         {% endfor %}
                                                     </tbody>
                                                 </table>
@@ -148,7 +154,7 @@
                             </div>
                         </div>
                         {% else %}
-                        <div class="card h-100 d-flex align-items-center justify-content-center p-5 text-center bg-white border-dashed">
+                        <div class="card h-100 d-flex align-items-center justify-content-center p-5 text-center bg-white border-0 shadow-sm" style="border: 2px dashed #e2e8f0 !important;">
                             <div class="mb-4 text-primary opacity-25">
                                 <i class="bi bi-robot" style="font-size: 5rem;"></i>
                             </div>

@@ -15,12 +15,12 @@
         .table tbody tr { 
             background: white; 
             border-radius: 15px; 
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
         .table tbody tr:hover { 
-            transform: scale(1.005); 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transform: translateY(-3px) scale(1.005); 
+            box-shadow: 0 12px 20px rgba(0,0,0,0.06);
         }
         .table td { border: none; padding: 20px 15px !important; }
         .table td:first-child { border-top-left-radius: 15px; border-bottom-left-radius: 15px; }
@@ -28,6 +28,9 @@
         
         .search-container { border-radius: 20px; border: none; }
         .progress { border-radius: 20px; background-color: #f1f5f9; }
+        
+        /* Sidebar dark override if CSS cache issue exists */
+        .sidebar { background: #0f172a !important; }
     </style>
 </head>
 <body>
@@ -38,8 +41,8 @@
                     <h4 class="fw-bold text-white mb-0">ValueHealth <span class="text-primary">AI</span></h4>
                 </div>
                 <nav class="nav flex-column flex-grow-1 mt-4">
-                    <a class="nav-link" href="/"><i class="bi bi-grid-fill"></i> Home Dashboard</a>
-                    <a class="nav-link" href="/analysis"><i class="bi bi-activity"></i> Risk Analysis</a>
+                    <a class="nav-link" href="/"><i class="bi bi-grid-fill"></i> Dashboard</a>
+                    <a class="nav-link" href="/analysis"><i class="bi bi-activity"></i> New Analysis</a>
                     <a class="nav-link active" href="/records"><i class="bi bi-clipboard2-pulse"></i> Patient History</a>
                 </nav>
                 <div class="mt-auto border-top border-secondary pt-3 d-none d-md-block">
@@ -90,7 +93,7 @@
                                         </div>
                                         <div>
                                             <div class="fw-bold text-dark">{{ r.name }}</div>
-                                            <div class="text-muted extra-small">Age: {{ r.age }} | {{ r.gender }}</div>
+                                            <div class="text-muted extra-small" style="font-size: 0.75rem;">Age: {{ r.age }} | {{ r.gender }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -108,7 +111,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge rounded-pill bg-{{ 'danger' if r.status=='URGENT' else 'success' }} px-3 py-2 shadow-sm">
+                                    <span class="badge rounded-pill bg-{{ 'danger' if r.status=='URGENT' else 'success' }} px-3 py-2 shadow-sm text-uppercase" style="font-size: 0.7rem;">
                                         <i class="bi bi-dot"></i> {{ r.status }}
                                     </span>
                                 </td>
@@ -139,7 +142,7 @@
     </div>
 
     <script>
-        // Set progress bar widths dynamically
+        // Set progress bar widths dynamically on load
         window.onload = function() {
             document.querySelectorAll('.dynamic-bar').forEach(function(bar) {
                 let width = bar.getAttribute('data-width');
@@ -147,11 +150,12 @@
             });
         };
 
-        // Live search filter
+        // Live search filter logic
         function filterRecords() {
             let input = document.getElementById('searchInput');
             let filter = input.value.toLowerCase();
-            let tr = document.getElementById('recordsTable').getElementsByTagName('tr');
+            let table = document.getElementById('recordsTable');
+            let tr = table.getElementsByTagName('tr');
 
             for (let i = 1; i < tr.length; i++) {
                 let nameCell = tr[i].getElementsByTagName('td')[0];
